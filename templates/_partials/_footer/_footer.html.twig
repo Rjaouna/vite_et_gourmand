@@ -1,0 +1,86 @@
+{# templates/_partials/_footer/_footer.html.twig #}
+
+<footer class="mt-5 bg-dark text-light">
+  <div class="container py-5">
+    <div class="row gy-4 align-items-start">
+
+      {# Brand #}
+      <div class="col-12 col-lg-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <img
+            src="{{ asset('assets/img/logo.png') }}"
+            alt="Logo"
+            style="height: 42px;"
+          >
+          <div>
+            <div class="fw-bold fs-5">Votre société</div>
+            <div class="text-secondary small">Qualité • Proximité • Confiance</div>
+          </div>
+        </div>
+
+        <p class="text-secondary mb-0">
+          Nous vous accompagnons avec un service fiable et soigné.
+          Contactez-nous pour toute demande, on répond rapidement.
+        </p>
+      </div>
+
+      {# Links #}
+      <div class="col-6 col-lg-2">
+        <div class="fw-semibold mb-3">Liens</div>
+        <ul class="list-unstyled mb-0">
+          <li class="mb-2"><a class="link-light text-decoration-none" href="#">Accueil</a></li>
+          <li class="mb-2"><a class="link-light text-decoration-none" href="#">Services</a></li>
+          <li class="mb-2"><a class="link-light text-decoration-none" href="#">Tarifs</a></li>
+          <li><a class="link-light text-decoration-none" href="#">Contact</a></li>
+        </ul>
+      </div>
+
+      {# Contact #}
+      <div class="col-6 col-lg-3">
+        <div class="fw-semibold mb-3">Contact</div>
+        <ul class="list-unstyled text-secondary mb-0">
+          <li class="mb-2">
+            <span class="text-light fw-semibold">Téléphone :</span> +33 6 00 00 00 00
+          </li>
+          <li class="mb-2">
+            <span class="text-light fw-semibold">Email :</span> contact@exemple.com
+          </li>
+          <li>
+            <span class="text-light fw-semibold">Adresse :</span> Paris, France
+          </li>
+        </ul>
+      </div>
+
+      {# Newsletter / Social #}
+      <div class="col-12 col-lg-3">
+        <div class="fw-semibold mb-3">Rester informé</div>
+
+        <form class="d-flex gap-2 mb-3" action="#" method="post">
+          <input type="email" class="form-control" placeholder="Votre email" aria-label="Votre email">
+          <button class="btn btn-primary" type="submit">OK</button>
+        </form>
+
+        <div class="d-flex gap-2">
+          <a href="#" class="btn btn-outline-light btn-sm">Facebook</a>
+          <a href="#" class="btn btn-outline-light btn-sm">Instagram</a>
+          <a href="#" class="btn btn-outline-light btn-sm">LinkedIn</a>
+        </div>
+      </div>
+
+    </div>
+
+    <hr class="border-secondary my-4">
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+      <div class="text-secondary small">
+        © {{ "now"|date("Y") }} Votre société — Tous droits réservés.
+      </div>
+
+      <div class="d-flex gap-3 small">
+        <a class="link-light text-decoration-none" href="#">Mentions légales</a>
+        <a class="link-light text-decoration-none" href="#">Politique de confidentialité</a>
+        <a class="link-light text-decoration-none" href="#">Cookies</a>
+      </div>
+    </div>
+  </div>
+</footer>
