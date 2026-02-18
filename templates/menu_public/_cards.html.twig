@@ -1,0 +1,54 @@
+<div class="row g-3">
+  {% for m in menus %}
+    <div class="col-md-6">
+      <div class="card h-100 border-0 shadow-sm" style="border-radius: 18px;">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-start gap-3">
+            <div>
+              <h5 class="fw-bold mb-1">{{ m.title }}</h5>
+              <div class="text-muted small">
+                {% if m.themeLabel %}
+                  <span class="badge text-bg-light border">
+                    <i class="bi bi-tag me-1"></i>{{ m.themeLabel }}
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+
+            {% if m.stock is not null %}
+              <span class="badge {{ m.stock > 0 ? 'bg-success' : 'bg-secondary' }}">
+                Stock: {{ m.stock }}
+              </span>
+            {% endif %}
+          </div>
+
+          <p class="text-muted mt-3 mb-3" style="min-height: 48px;">
+            {{ m.description ?? '—' }}
+          </p>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-semibold">
+                <i class="bi bi-people me-1"></i> Min: {{ m.minPeople }}
+              </div>
+              <div class="fw-bold text-primary">
+                <i class="bi bi-cash-coin me-1"></i> {{ m.minPrice }} €
+              </div>
+            </div>
+
+            <a class="btn btn-outline-primary" href="#">
+              Voir détail
+              <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="col-12">
+      <div class="alert alert-warning border-0 shadow-sm" style="border-radius: 16px;">
+        Aucun menu ne correspond à tes filtres.
+      </div>
+    </div>
+  {% endfor %}
+</div>

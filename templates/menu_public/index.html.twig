@@ -1,0 +1,159 @@
+{% extends 'base.html.twig' %}
+{% block title %}Tous les menus{% endblock %}
+
+{% block body %}
+<div class="py-5" style="background: linear-gradient(135deg, rgba(13,110,253,.08), rgba(25,135,84,.06));">
+  <div class="container">
+
+    <div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3 mb-4">
+      <div>
+        <h1 class="fw-bold mb-1">Tous les menus</h1>
+       
+      </div>
+
+  
+    </div>
+
+    <div class="row g-4">
+      {# FILTRES #}
+      <div class="col-lg-4">
+        <div class="card border-0 shadow-sm" style="border-radius: 18px;">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center gap-2 mb-3">
+              <i class="bi bi-funnel fs-4 text-primary"></i>
+              <h5 class="fw-bold mb-0">Filtres</h5>
+            </div>
+
+            <form id="menuFilters" class="vstack gap-3">
+              {# Prix max simple #}
+              <div>
+                <label class="form-label fw-semibold">Prix maximum (€)</label>
+                <input class="form-control" type="number" min="0" step="1" name="priceMax" placeholder="Ex: 60">
+                <div class="form-text">Filtre rapide par prix maximum.</div>
+              </div>
+
+              {# Fourchette #}
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label fw-semibold">Prix min</label>
+                  <input class="form-control" type="number" min="0" step="1" name="priceMin" placeholder="Ex: 20">
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold">Prix max</label>
+                  <input class="form-control" type="number" min="0" step="1" name="priceMaxRange" placeholder="Ex: 80">
+                </div>
+              </div>
+
+              {# Thème #}
+              <div>
+                <label class="form-label fw-semibold">Thème</label>
+                <select class="form-select" name="theme">
+                  <option value="">Tous</option>
+                  {% for t in themes %}
+                    <option value="{{ t }}">{{ t }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              {# Min personnes #}
+              <div>
+                <label class="form-label fw-semibold">Pour au moins (personnes)</label>
+                <input class="form-control" type="number" min="1" step="1" name="minPeople" placeholder="Ex: 6">
+                <div class="form-text">Ex : si tu mets 6, on garde les menus dont minPeople ≤ 6.</div>
+              </div>
+
+              <div class="d-flex gap-2 pt-2">
+                <button class="btn btn-primary w-100" type="button" id="btnApplyFilters">
+                  <i class="bi bi-search me-1"></i> Appliquer
+                </button>
+                <button class="btn btn-outline-secondary" type="button" id="btnResetFilters">
+                  <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {# RESULTATS #}
+      <div class="col-lg-8">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="fw-semibold">
+            <span id="menuCount">{{ menus|length }}</span> menu(x)
+          </div>
+          <div id="menuLoading" class="text-muted small d-none">
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Chargement...
+          </div>
+        </div>
+
+        <div id="menuResults">
+          {% include 'menu_public/_cards.html.twig' with { menus: menus } %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('menuFilters');
+  const btnApply = document.getElementById('btnApplyFilters');
+  const btnReset = document.getElementById('btnResetFilters');
+  const results = document.getElementById('menuResults');
+  const countEl = document.getElementById('menuCount');
+  const loading = document.getElementById('menuLoading');
+
+  const url = "{{ path('app_menus_search') }}";
+
+  function setLoading(state) {
+    loading.classList.toggle('d-none', !state);
+  }
+
+  function buildQuery() {
+    const params = new URLSearchParams(new FormData(form));
+    // option : si prixMax est rempli, on peut laisser la fourchette aussi (ça marche)
+    return params.toString();
+  }
+
+  async function refreshMenus() {
+    setLoading(true);
+
+    const qs = buildQuery();
+    const res = await fetch(url + (qs ? ('?' + qs) : ''), {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok || !data || !data.ok) {
+      results.innerHTML = `<div class="alert alert-danger">Erreur lors du chargement.</div>`;
+      setLoading(false);
+      return;
+    }
+
+    results.innerHTML = data.html;
+    countEl.textContent = data.count;
+    setLoading(false);
+  }
+
+  // Appliquer
+  btnApply.addEventListener('click', refreshMenus);
+
+  // Reset
+  btnReset.addEventListener('click', () => {
+    form.reset();
+    refreshMenus();
+  });
+
+  // ✅ Dynamique sans bouton : dès qu’on change un filtre => refresh
+  form.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('change', refreshMenus);
+    el.addEventListener('input', () => {
+      // petit debounce simple
+      clearTimeout(window.__menusTimer);
+      window.__menusTimer = setTimeout(refreshMenus, 350);
+    });
+  });
+</script>
+{% endblock %}
