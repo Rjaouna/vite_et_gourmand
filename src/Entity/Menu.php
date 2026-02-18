@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\MenuRepository;
+use App\Entity\MenuImage;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -45,6 +46,34 @@ class Menu
 
     #[ORM\Column]
     private ?\DateTimeImmutable $updatedAt = null;
+    #[ORM\OneToMany(mappedBy: 'menu', targetEntity: MenuImage::class, orphanRemoval: true, cascade: ['persist'])]
+private Collection $images;
+
+
+/** @return Collection<int, MenuImage> */
+public function getImages(): Collection
+{
+    return $this->images;
+}
+
+public function addImage(MenuImage $image): static
+{
+    if (!$this->images->contains($image)) {
+        $this->images->add($image);
+        $image->setMenu($this);
+    }
+    return $this;
+}
+
+public function removeImage(MenuImage $image): static
+{
+    if ($this->images->removeElement($image)) {
+        if ($image->getMenu() === $this) {
+            $image->setMenu(null);
+        }
+    }
+    return $this;
+}
 
     /**
      * @var Collection<int, Order>
@@ -54,7 +83,8 @@ class Menu
 
     public function __construct()
     {
-        $this->orders = new ArrayCollection();
+      $this->orders = new ArrayCollection();
+    $this->images = new ArrayCollection();
     }
 
     public function getId(): ?int

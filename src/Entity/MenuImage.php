@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Menu;
 use App\Repository\MenuImageRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -27,6 +28,20 @@ class MenuImage
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $createdAt = null;
+    #[ORM\ManyToOne(inversedBy: 'images')]
+#[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+private ?Menu $menu = null;
+
+public function getMenu(): ?Menu
+{
+    return $this->menu;
+}
+
+public function setMenu(?Menu $menu): static
+{
+    $this->menu = $menu;
+    return $this;
+}
 
     public function getId(): ?int
     {

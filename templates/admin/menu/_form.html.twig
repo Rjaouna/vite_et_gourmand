@@ -1,0 +1,24 @@
+<div class="card shadow-sm">
+  <div class="card-body p-4">
+    {{ form_start(form) }}
+      <div class="row g-3">
+        <div class="col-md-6">{{ form_row(form.title) }}</div>
+        <div class="col-md-6">{{ form_row(form.themeLabel) }}</div>
+
+        <div class="col-12">{{ form_row(form.description) }}</div>
+        <div class="col-12">{{ form_row(form.conditions) }}</div>
+
+        <div class="col-md-4">{{ form_row(form.minPeople) }}</div>
+        <div class="col-md-4">{{ form_row(form.minPrice) }}</div>
+        <div class="col-md-4">{{ form_row(form.stock) }}</div>
+
+        <div class="col-12">{{ form_row(form.isActive) }}</div>
+      </div>
+
+      <div class="mt-4 d-flex gap-2">
+        <button class="btn btn-primary">Enregistrer</button>
+        <a href="{{ path('admin_menu_index') }}" class="btn btn-outline-secondary">Retour</a>
+      </div>
+    {{ form_end(form) }}
+  </div>
+</div>
