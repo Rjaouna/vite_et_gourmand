@@ -1,0 +1,172 @@
+{% extends 'base.html.twig' %}
+{% block title %}Horaires{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="fw-bold mb-0">Horaires</h1>
+
+    <button class="btn btn-primary" id="btnAddOpeningHour"
+            data-url="{{ path('admin_opening_hour_new') }}">
+      + Ajouter
+    </button>
+  </div>
+
+  {% for type, messages in app.flashes %}
+    {% for m in messages %}
+      <div class="alert alert-{{ type }}">{{ m }}</div>
+    {% endfor %}
+  {% endfor %}
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Jour</th>
+            <th>Statut</th>
+            <th>Ouverture</th>
+            <th>Fermeture</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for h in hours %}
+            <tr>
+              <td class="fw-semibold">{{ days[h.dayOfWeek] ?? ('Jour ' ~ h.dayOfWeek) }}</td>
+              <td>
+                {% if h.closed %}
+                  <span class="badge bg-secondary">Fermé</span>
+                {% else %}
+                  <span class="badge bg-success">Ouvert</span>
+                {% endif %}
+              </td>
+              <td>{{ h.openTime ? h.openTime|date('H:i') : '-' }}</td>
+              <td>{{ h.closeTime ? h.closeTime|date('H:i') : '-' }}</td>
+              <td class="text-end">
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary btnEditOpeningHour"
+                        data-url="{{ path('admin_opening_hour_edit', {id: h.id}) }}">
+                  Modifier
+                </button>
+
+                <form method="post"
+                      action="{{ path('admin_opening_hour_delete', {id: h.id}) }}"
+                      class="d-inline"
+                      onsubmit="return confirm('Supprimer cet horaire ?');">
+                  <input type="hidden" name="_token" value="{{ csrf_token('delete_opening_hour_' ~ h.id) }}">
+                  <button class="btn btn-sm btn-outline-danger">Supprimer</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-4">Aucun horaire.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="openingHourModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="openingHourModalTitle">Horaires</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="openingHourModalBody">Chargement...</div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import * as bootstrap from 'bootstrap';
+
+  const modalEl = document.getElementById('openingHourModal');
+  const modalTitle = document.getElementById('openingHourModalTitle');
+  const modalBody = document.getElementById('openingHourModalBody');
+  const modal = new bootstrap.Modal(modalEl);
+
+  function bindFormAjax() {
+    const form = modalBody.querySelector('#openingHourAjaxForm');
+    if (!form) return;
+
+    const checkbox = modalBody.querySelector('#opening_hour_isClosed');
+    const openTime = modalBody.querySelector('#opening_hour_openTime');
+    const closeTime = modalBody.querySelector('#opening_hour_closeTime');
+
+    const toggle = () => {
+      if (!checkbox || !openTime || !closeTime) return;
+      const disabled = checkbox.checked;
+      openTime.disabled = disabled;
+      closeTime.disabled = disabled;
+      if (disabled) { openTime.value = ''; closeTime.value = ''; }
+    };
+
+    if (checkbox) {
+      checkbox.addEventListener('change', toggle);
+      toggle();
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const res = await fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        },
+        body: new FormData(form)
+      });
+
+      // On tente JSON, sinon on affiche l'erreur brute
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const text = await res.text();
+        modalBody.innerHTML = '<div class="alert alert-danger">Réponse non JSON (erreur serveur). Regarde la console.</div>';
+        console.error('Réponse non JSON:', text);
+        return;
+      }
+
+      const data = await res.json();
+
+      if (res.ok && data.ok) {
+        modal.hide();
+        location.reload();
+        return;
+      }
+
+      if (data.html) {
+        modalBody.innerHTML = data.html;
+        bindFormAjax();
+        return;
+      }
+
+      modalBody.innerHTML = '<div class="alert alert-danger">Erreur serveur.</div>';
+    });
+  }
+
+  async function openModal(url, title) {
+    modalTitle.textContent = title;
+    modalBody.innerHTML = 'Chargement...';
+    modal.show();
+
+    const res = await fetch(url, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+
+    modalBody.innerHTML = await res.text();
+    bindFormAjax();
+  }
+
+  document.getElementById('btnAddOpeningHour')?.addEventListener('click', (e) => {
+    openModal(e.currentTarget.dataset.url, 'Ajouter un horaire');
+  });
+
+  document.querySelectorAll('.btnEditOpeningHour').forEach(btn => {
+    btn.addEventListener('click', () => openModal(btn.dataset.url, 'Modifier un horaire'));
+  });
+</script>
+{% endblock %}

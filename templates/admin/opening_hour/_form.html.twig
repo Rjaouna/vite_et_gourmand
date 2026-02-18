@@ -1,0 +1,33 @@
+{{ form_start(form) }}
+  <div class="row g-3">
+    <div class="col-md-6">{{ form_row(form.dayOfWeek) }}</div>
+    <div class="col-md-6 d-flex align-items-end">{{ form_row(form.isClosed) }}</div>
+
+    <div class="col-md-6">{{ form_row(form.openTime) }}</div>
+    <div class="col-md-6">{{ form_row(form.closeTime) }}</div>
+  </div>
+
+  <div class="mt-4 d-flex gap-2">
+    <button class="btn btn-primary">Enregistrer</button>
+    <a href="{{ path('admin_opening_hour_index') }}" class="btn btn-outline-secondary">Retour</a>
+  </div>
+{{ form_end(form) }}
+
+<script>
+  // Simple UX : si "Fermé" est coché -> désactiver les heures
+  const checkbox = document.querySelector('#opening_hour_isClosed');
+  const openTime = document.querySelector('#opening_hour_openTime');
+  const closeTime = document.querySelector('#opening_hour_closeTime');
+
+  function toggleTimes() {
+    const disabled = checkbox.checked;
+    openTime.disabled = disabled;
+    closeTime.disabled = disabled;
+    if (disabled) { openTime.value = ''; closeTime.value = ''; }
+  }
+
+  if (checkbox && openTime && closeTime) {
+    checkbox.addEventListener('change', toggleTimes);
+    toggleTimes();
+  }
+</script>

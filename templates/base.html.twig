@@ -8,6 +8,8 @@
 
     {% block stylesheets %}
       <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.css') }}">
+      {{ importmap('app') }}
+
     {% endblock %}
   </head>
 

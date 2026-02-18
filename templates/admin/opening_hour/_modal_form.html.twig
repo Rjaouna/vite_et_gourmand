@@ -1,0 +1,131 @@
+{# templates/admin/opening_hour/_modal_form.html.twig #}
+
+<style>
+  .oh-card {
+    border: 0;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(13,110,253,.06), rgba(255,255,255,1));
+  }
+  .oh-label {
+    font-weight: 600;
+  }
+  .oh-muted {
+    color: rgba(33,37,41,.65);
+    font-size: .9rem;
+  }
+</style>
+
+<div class="oh-card p-3 p-md-4">
+  <div class="d-flex align-items-start gap-3 mb-3">
+    <div class="rounded-circle d-flex align-items-center justify-content-center"
+         style="width:44px;height:44px;background:rgba(13,110,253,.12);">
+      <i class="bi bi-clock-history fs-4 text-primary"></i>
+    </div>
+    <div>
+      <h5 class="mb-1 fw-bold">Horaires d’ouverture</h5>
+      <div class="oh-muted">Définis les horaires pour un jour précis (ou indique “Fermé”).</div>
+    </div>
+  </div>
+
+  {{ form_start(form, { attr: { id: 'openingHourAjaxForm' } }) }}
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="mb-1 oh-label">
+          <i class="bi bi-calendar-week me-1"></i> Jour
+        </div>
+        {{ form_widget(form.dayOfWeek, { attr: { class: 'form-select form-select-lg' } }) }}
+        {{ form_errors(form.dayOfWeek) }}
+      </div>
+
+      <div class="col-md-6 d-flex align-items-end">
+        <div class="w-100">
+          <div class="mb-1 oh-label">
+            <i class="bi bi-door-closed me-1"></i> Statut
+          </div>
+
+          {# Switch moderne #}
+          <div class="form-check form-switch mb-0">
+            {{ form_widget(form.isClosed, { attr: { class: 'form-check-input', role: 'switch' } }) }}
+            <label class="form-check-label" for="{{ form.isClosed.vars.id }}">Fermé</label>
+          </div>
+
+          {{ form_errors(form.isClosed) }}
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="p-3 border rounded-3 bg-white">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="oh-label">
+              <i class="bi bi-clock me-1"></i> Heures
+            </div>
+            <span class="badge text-bg-light border" id="ohBadge">Ouvert</span>
+          </div>
+
+          <div class="row g-3" id="ohTimes">
+            <div class="col-md-6">
+              <label class="form-label oh-label" for="{{ form.openTime.vars.id }}">Ouverture</label>
+              {{ form_widget(form.openTime, { attr: { class: 'form-control form-control-lg' } }) }}
+              {{ form_errors(form.openTime) }}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label oh-label" for="{{ form.closeTime.vars.id }}">Fermeture</label>
+              {{ form_widget(form.closeTime, { attr: { class: 'form-control form-control-lg' } }) }}
+              {{ form_errors(form.closeTime) }}
+            </div>
+          </div>
+
+          <div class="oh-muted mt-2">
+            Astuce : si “Fermé” est activé, les heures sont automatiquement désactivées.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+      <button class="btn btn-primary btn-lg">
+        <i class="bi bi-check2-circle me-1"></i> Enregistrer
+      </button>
+
+      <button type="button" class="btn btn-outline-secondary btn-lg" data-bs-dismiss="modal">
+        Annuler
+      </button>
+    </div>
+
+  {{ form_end(form) }}
+</div>
+
+<script>
+  // UX : cacher/désactiver les heures si "Fermé"
+  const chk = document.getElementById('{{ form.isClosed.vars.id }}');
+  const openInput = document.getElementById('{{ form.openTime.vars.id }}');
+  const closeInput = document.getElementById('{{ form.closeTime.vars.id }}');
+  const timesWrap = document.getElementById('ohTimes');
+  const badge = document.getElementById('ohBadge');
+
+  function syncOH() {
+    if (!chk || !openInput || !closeInput || !timesWrap || !badge) return;
+
+    const closed = chk.checked;
+
+    openInput.disabled = closed;
+    closeInput.disabled = closed;
+
+    if (closed) {
+      badge.textContent = 'Fermé';
+      badge.className = 'badge text-bg-secondary';
+      timesWrap.style.opacity = '0.55';
+    } else {
+      badge.textContent = 'Ouvert';
+      badge.className = 'badge text-bg-success';
+      timesWrap.style.opacity = '1';
+    }
+  }
+
+  if (chk) {
+    chk.addEventListener('change', syncOH);
+    syncOH();
+  }
+</script>
