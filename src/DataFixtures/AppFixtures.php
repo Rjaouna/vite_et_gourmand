@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\DataFixtures;
 
 use App\Entity\Allergen;
@@ -68,6 +70,16 @@ SVG;
         $faker = Factory::create('fr_FR');
         $now   = new \DateTimeImmutable();
         $projectDir = dirname(__DIR__, 2);
+
+        // ✅ Image principale par défaut pour chaque menu
+        // correspond à : public/uploads/menus/menu.png
+        $defaultCoverPath = 'uploads/menus/menu.png';
+
+        // s'assure que le dossier existe (le fichier menu.png doit exister côté projet)
+        $menusDir = $projectDir . '/public/uploads/menus';
+        if (!is_dir($menusDir)) {
+            @mkdir($menusDir, 0775, true);
+        }
 
         // =========================
         // USERS (admin / employé / clients)
@@ -221,7 +233,7 @@ SVG;
                 ->setDescription($faker->sentence(18))
                 ->setConditions('Commande minimum ' . $faker->numberBetween(24, 168) . 'h à l’avance.')
                 ->setMinPeople($minPeople)
-                ->setMinPrice((string)$minPrice)
+                ->setMinPrice((string) $minPrice)
                 ->setStock($faker->numberBetween(0, 15))
                 ->setIsActive(true)
                 ->setCreatedAt($now)
@@ -231,8 +243,15 @@ SVG;
             $imgCount = $faker->numberBetween(1, 4);
             for ($j = 1; $j <= $imgCount; $j++) {
                 $isCover = ($j === 1); // la première cover
-                $fileName = 'menu_' . $i . '_' . $j . '.svg';
-                $imgPath = $this->createMenuPlaceholderImage($projectDir, $fileName, $menu->getTitle());
+
+                if ($isCover) {
+                    // ✅ Photo principale par défaut (la même pour tous les menus)
+                    $imgPath = $defaultCoverPath;
+                } else {
+                    // Images secondaires : placeholders SVG générés
+                    $fileName = 'menu_' . $i . '_' . $j . '.svg';
+                    $imgPath = $this->createMenuPlaceholderImage($projectDir, $fileName, $menu->getTitle());
+                }
 
                 $img = (new MenuImage())
                     ->setMenu($menu)

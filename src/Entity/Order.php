@@ -18,7 +18,7 @@ class Order
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'orders')]
-    private ?user $customer = null;
+    private ?User $customer = null;
 
     #[ORM\ManyToOne(inversedBy: 'orders')]
     private ?Menu $menu = null;
@@ -60,12 +60,12 @@ class Order
         return $this->id;
     }
 
-    public function getCustomer(): ?user
+    public function getCustomer(): ?User
     {
         return $this->customer;
     }
 
-    public function setCustomer(?user $customer): static
+    public function setCustomer(?User $customer): static
     {
         $this->customer = $customer;
 
