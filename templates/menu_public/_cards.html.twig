@@ -1,7 +1,37 @@
 <div class="row g-3">
   {% for m in menus %}
+
+    {# --- choisir l'image de couverture --- #}
+    {% set cover = null %}
+    {% for img in m.images %}
+      {% if img.isCover %}
+        {% set cover = img %}
+      {% endif %}
+    {% endfor %}
+    {% if cover is null %}
+      {% set cover = m.images|first %}
+    {% endif %}
+
     <div class="col-md-6">
-      <div class="card h-100 border-0 shadow-sm" style="border-radius: 18px;">
+      <div class="card h-100 border-0 shadow-sm overflow-hidden" style="border-radius: 18px;">
+
+        {# ✅ image DANS la card #}
+        {% if cover %}
+          <img
+            src="{{ asset(cover.imagePath) }}"
+            alt="{{ cover.altText ?? m.title }}"
+            class="card-img-top"
+            style="height: 170px; object-fit: cover;"
+          >
+        {% else %}
+          <div class="bg-light d-flex align-items-center justify-content-center"
+               style="height:170px;">
+            <span class="text-muted small">
+              <i class="bi bi-image me-1"></i>Aucune image
+            </span>
+          </div>
+        {% endif %}
+
         <div class="card-body p-4">
           <div class="d-flex justify-content-between align-items-start gap-3">
             <div>
@@ -37,13 +67,14 @@
             </div>
 
             <a class="btn btn-outline-primary" href="#">
-              Voir détail
-              <i class="bi bi-arrow-right ms-1"></i>
+              Voir détail <i class="bi bi-arrow-right ms-1"></i>
             </a>
           </div>
         </div>
+
       </div>
     </div>
+
   {% else %}
     <div class="col-12">
       <div class="alert alert-warning border-0 shadow-sm" style="border-radius: 16px;">

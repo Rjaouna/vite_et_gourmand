@@ -1,0 +1,112 @@
+{% extends 'base.html.twig' %}
+{% block title %}Images - {{ menu.title }}{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h1 class="fw-bold mb-0">Images</h1>
+      <div class="text-muted">{{ menu.title }}</div>
+    </div>
+
+    <button class="btn btn-primary" id="btnAddImage"
+            data-url="{{ path('admin_menu_image_new', {id: menu.id}) }}">
+      <i class="bi bi-plus-circle me-1"></i> Ajouter une image
+    </button>
+  </div>
+
+  <div class="row g-3">
+    {% for img in images %}
+      <div class="col-md-4">
+        <div class="card shadow-sm border-0" style="border-radius: 18px;">
+          <img src="{{ asset(img.imagePath) }}" class="card-img-top"
+               style="height:170px;object-fit:cover;border-top-left-radius:18px;border-top-right-radius:18px;">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <span class="badge bg-light text-dark border">pos: {{ img.position ?? '-' }}</span>
+              {% if img.isCover %}
+                <span class="badge bg-success">Cover</span>
+              {% endif %}
+            </div>
+            <div class="text-muted small mt-2">{{ img.altText ?? '—' }}</div>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="col-12">
+        <div class="alert alert-warning">Aucune image pour ce menu.</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{# Modal #}
+<div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="imgModalTitle">Image</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="imgModalBody">Chargement...</div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import * as bootstrap from 'bootstrap';
+
+  const modalEl = document.getElementById('imgModal');
+  const modalTitle = document.getElementById('imgModalTitle');
+  const modalBody = document.getElementById('imgModalBody');
+  const modal = new bootstrap.Modal(modalEl);
+
+  function bindAjaxForm() {
+    const form = modalBody.querySelector('form');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const res = await fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        },
+        body: new FormData(form)
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (res.ok && data && data.ok) {
+        modal.hide();
+        location.reload();
+        return;
+      }
+
+      if (data && data.html) {
+        modalBody.innerHTML = data.html;
+        bindAjaxForm();
+        return;
+      }
+
+      modalBody.innerHTML = '<div class="alert alert-danger">Erreur serveur.</div>';
+    });
+  }
+
+  async function openModal(url) {
+    modalTitle.textContent = 'Ajouter une image';
+    modalBody.innerHTML = 'Chargement...';
+    modal.show();
+
+    const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    modalBody.innerHTML = await res.text();
+    bindAjaxForm();
+  }
+
+  document.getElementById('btnAddImage').addEventListener('click', (e) => {
+    openModal(e.currentTarget.dataset.url);
+  });
+</script>
+{% endblock %}
