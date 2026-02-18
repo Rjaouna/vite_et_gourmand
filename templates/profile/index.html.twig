@@ -1,0 +1,160 @@
+{% extends 'base.html.twig' %}
+{% block title %}Mon profil{% endblock %}
+
+{% block body %}
+<div class="py-5" style="background: linear-gradient(135deg, rgb(255 240 229), rgba(25, 135, 84, .06))">
+  <div class="container" style="max-width: 980px;">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <div>
+        <h1 class="fw-bold mb-1">Mon profil</h1>
+        <div class="text-muted">Modifie tes informations champ par champ</div>
+      </div>
+      <div class="text-end">
+        <div class="small text-muted">Connecté :</div>
+        <div class="fw-semibold">{{ app.user.email }}</div>
+      </div>
+    </div>
+
+    <div id="profileAlert" class="alert d-none" role="alert"></div>
+
+    <div class="card border-0 shadow-sm" style="border-radius: 18px;">
+      <div class="card-body p-4 p-lg-5">
+
+        {% set fields = [
+          { key: 'firstName', label: 'Prénom', type: 'text', value: app.user.firstName },
+          { key: 'lastName', label: 'Nom', type: 'text', value: app.user.lastName },
+          { key: 'phone', label: 'Téléphone', type: 'text', value: app.user.phone },
+
+          { key: 'addressLine1', label: 'Adresse', type: 'text', value: app.user.addressLine1 },
+          { key: 'addressLine2', label: 'Complément', type: 'text', value: app.user.addressLine2 },
+
+          { key: 'postalCode', label: 'Code postal', type: 'number', value: app.user.postalCode },
+          { key: 'city', label: 'Ville', type: 'text', value: app.user.city },
+          { key: 'country', label: 'Pays', type: 'text', value: app.user.country }
+        ] %}
+
+        <div class="row g-3">
+          {% for f in fields %}
+            <div class="col-12">
+              <div class="p-3 border rounded-3 bg-white d-flex flex-column flex-md-row gap-3 align-items-md-center justify-content-between">
+                <div class="w-100">
+                  <div class="fw-semibold mb-1">{{ f.label }}</div>
+
+                  {# affichage #}
+                  <div class="text-muted" data-view="{{ f.key }}">
+                    {{ f.value is not empty ? f.value : '—' }}
+                  </div>
+
+                  {# édition #}
+                  <div class="d-none" data-edit="{{ f.key }}">
+                    <div class="d-flex gap-2 mt-2">
+                      <input class="form-control"
+                             type="{{ f.type }}"
+                             value="{{ f.value ?? '' }}"
+                             data-input="{{ f.key }}"
+                             {% if f.key == 'postalCode' %}min="0"{% endif %}>
+
+                      <button class="btn btn-primary" data-save="{{ f.key }}">
+                        Enregistrer
+                      </button>
+
+                      <button class="btn btn-outline-secondary" data-cancel="{{ f.key }}">
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="text-md-end">
+                  <button class="btn btn-outline-primary" data-open="{{ f.key }}">
+                    Modifier
+                  </button>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  const alertBox = document.getElementById('profileAlert');
+  const url = "{{ path('app_profile_update_field') }}";
+
+  function showAlert(type, msg) {
+    alertBox.className = 'alert alert-' + type;
+    alertBox.textContent = msg;
+    alertBox.classList.remove('d-none');
+    setTimeout(() => alertBox.classList.add('d-none'), 2500);
+  }
+
+  function openEdit(key) {
+    document.querySelector(`[data-edit="${key}"]`).classList.remove('d-none');
+    document.querySelector(`[data-view="${key}"]`).classList.add('d-none');
+  }
+
+  function closeEdit(key) {
+    document.querySelector(`[data-edit="${key}"]`).classList.add('d-none');
+    document.querySelector(`[data-view="${key}"]`).classList.remove('d-none');
+  }
+
+  async function saveField(key) {
+    const input = document.querySelector(`[data-input="${key}"]`);
+    const value = input.value;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ field: key, value: value })
+    });
+
+    const data = await res.json().catch(() => null);
+
+    if (!res.ok || !data || !data.ok) {
+      showAlert('danger', (data && data.message) ? data.message : 'Erreur');
+      return;
+    }
+
+    // Update view text
+    const view = document.querySelector(`[data-view="${key}"]`);
+    view.textContent = (data.value === null || data.value === '') ? '—' : data.value;
+
+    closeEdit(key);
+    showAlert('success', data.message || 'Enregistré');
+  }
+
+  // Bind buttons
+  document.querySelectorAll('[data-open]').forEach(btn => {
+    btn.addEventListener('click', () => openEdit(btn.dataset.open));
+  });
+
+  document.querySelectorAll('[data-cancel]').forEach(btn => {
+    btn.addEventListener('click', () => closeEdit(btn.dataset.cancel));
+  });
+
+  document.querySelectorAll('[data-save]').forEach(btn => {
+    btn.addEventListener('click', () => saveField(btn.dataset.save));
+  });
+
+  // Enter to save
+  document.querySelectorAll('[data-input]').forEach(inp => {
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const key = inp.dataset.input;
+        saveField(key);
+      }
+      if (e.key === 'Escape') {
+        const key = inp.dataset.input;
+        closeEdit(key);
+      }
+    });
+  });
+</script>
+{% endblock %}

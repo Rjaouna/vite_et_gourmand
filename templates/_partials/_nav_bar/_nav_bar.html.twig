@@ -11,7 +11,7 @@
 
     <div class="collapse navbar-collapse" id="navbarMain">
 
-      {# --- MENU CENTRÉ --- #}
+      {# --- MENU PRINCIPAL (centré) --- #}
       <ul class="navbar-nav mx-auto gap-lg-3 fs-5 fw-semibold">
         <li class="nav-item">
           <a class="nav-link d-flex align-items-center gap-2" href="{{ path('app_home') }}">
@@ -30,59 +30,70 @@
             <i class="bi bi-envelope"></i> Contact
           </a>
         </li>
-
-        {% if is_granted('ROLE_EMPLOYEE') %}
-          <li class="nav-item">
-            <a class="nav-link d-flex align-items-center gap-2" href="#">
-              <i class="bi bi-briefcase"></i> Espace Employé
-            </a>
-          </li>
-        {% endif %}
-
-        {% if is_granted('ROLE_ADMIN') %}
-          <li class="nav-item">
-            <a class="nav-link d-flex align-items-center gap-2" href="#">
-              <i class="bi bi-shield-lock"></i> Espace Admin
-            </a>
-          </li>
-        {% endif %}
-                {% if is_granted('ROLE_ADMIN') %}
-  <a class="nav-link" href="{{ path('admin_opening_hour_index') }}">Horaires</a>
-{% endif %}
       </ul>
 
-      {# --- COMPTE À DROITE --- #}
+      {# --- COMPTE À DROITE (tout regroupé ici) --- #}
       <ul class="navbar-nav ms-lg-auto fs-5 fw-semibold">
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" data-bs-toggle="dropdown"
-             href="#" role="button" aria-expanded="false">
+          <a class="nav-link dropdown-toggle d-flex align-items-center gap-2"
+             data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
             <i class="bi bi-person-circle"></i> Compte
           </a>
 
           <div class="dropdown-menu dropdown-menu-end">
+
             {% if app.user %}
-              <a class="dropdown-item d-flex align-items-center gap-2" href="#">
+              {# --- SECTION UTILISATEUR --- #}
+              <h6 class="dropdown-header">Espace utilisateur</h6>
+
+              <a class="dropdown-item d-flex align-items-center gap-2" href="{{ path('app_profile') }}">
                 <i class="bi bi-person"></i> Mon profil
               </a>
+
               <a class="dropdown-item d-flex align-items-center gap-2" href="#">
                 <i class="bi bi-bag-check"></i> Mes commandes
               </a>
 
+              {# --- SECTION EMPLOYÉ --- #}
+              {% if is_granted('ROLE_EMPLOYEE') %}
+                <div class="dropdown-divider"></div>
+                <h6 class="dropdown-header">Espace employé</h6>
+
+                <a class="dropdown-item d-flex align-items-center gap-2" href="#">
+                  <i class="bi bi-briefcase"></i> Tableau employé
+                </a>
+              {% endif %}
+
+              {# --- SECTION ADMIN --- #}
+              {% if is_granted('ROLE_ADMIN') %}
+                <div class="dropdown-divider"></div>
+                <h6 class="dropdown-header">Espace administrateur</h6>
+
+                <a class="dropdown-item d-flex align-items-center gap-2" href="#">
+                  <i class="bi bi-shield-lock"></i> Tableau admin
+                </a>
+
+                <a class="dropdown-item d-flex align-items-center gap-2" href="{{ path('admin_opening_hour_index') }}">
+                  <i class="bi bi-clock-history"></i> Gestion des horaires
+                </a>
+              {% endif %}
+
               <div class="dropdown-divider"></div>
 
-              <a class="dropdown-item d-flex align-items-center gap-2" href="{{ path('app_logout') }}">
+              <a class="dropdown-item d-flex align-items-center gap-2 text-danger" href="{{ path('app_logout') }}">
                 <i class="bi bi-box-arrow-right"></i> Déconnexion
               </a>
+
             {% else %}
               <a class="dropdown-item d-flex align-items-center gap-2" href="{{ path('app_login') }}">
                 <i class="bi bi-box-arrow-in-right"></i> Connexion
               </a>
+
               <a class="dropdown-item d-flex align-items-center gap-2" href="{{ path('app_register') }}">
                 <i class="bi bi-person-plus"></i> Créer un compte
               </a>
-      
-
             {% endif %}
+
           </div>
         </li>
       </ul>
