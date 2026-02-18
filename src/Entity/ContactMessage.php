@@ -20,8 +20,9 @@ class ContactMessage
     #[ORM\Column(type: Types::TEXT)]
     private ?string $message = null;
 
-    #[ORM\Column(length: 50)]
-    private ?string $email = null;
+    #[ORM\Column(length: 180)]
+private ?string $email = null;
+
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $createdAt = null;

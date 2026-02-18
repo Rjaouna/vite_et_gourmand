@@ -1,0 +1,166 @@
+{% extends 'base.html.twig' %}
+{% block title %}Contact{% endblock %}
+
+{% block body %}
+{# Petite mise en forme globale #}
+<div class="py-5" style="background: linear-gradient(135deg, rgb(255 240 229), rgba(25, 135, 84, .06))">
+  <div class="container">
+
+    <div class="text-center mb-4">
+      <h1 class="fw-bold mb-2">Contact</h1>
+      <p class="text-muted mb-0">Une question ? Un devis ? Écris-nous, on te répond rapidement.</p>
+    </div>
+
+    {# Flash messages (mode normal) #}
+    {% for type, messages in app.flashes %}
+      {% for m in messages %}
+        <div class="alert alert-{{ type }} mb-3">{{ m }}</div>
+      {% endfor %}
+    {% endfor %}
+
+    <div class="row g-4 align-items-stretch">
+      {# Colonne FORM #}
+      <div class="col-12 col-lg-7">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 18px;">
+          <div class="card-body p-4 p-lg-5">
+
+            {# Alert (mode AJAX) #}
+            <div id="contactAlert" class="alert d-none" role="alert"></div>
+
+            <form id="contactForm"
+                  action="{{ path('app_contact') }}"
+                  method="post"
+                  class=""
+                  data-turbo="false">
+
+              <input type="hidden" name="_token" value="{{ csrf_token('contact_message') }}">
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="title">Titre</label>
+                <input class="form-control form-control-lg"
+                       id="title"
+                       name="title"
+                       maxlength="150"
+                       placeholder="Ex: Demande de menu pour un événement"
+                       required>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="email">Votre email</label>
+                <input class="form-control form-control-lg"
+                       id="email"
+                       name="email"
+                       type="email"
+                       placeholder="ex: nom@email.com"
+                       required>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label fw-semibold" for="message">Message</label>
+                <textarea class="form-control"
+                          id="message"
+                          name="message"
+                          rows="6"
+                          placeholder="Explique-nous ton besoin (date, nombre de personnes, lieu, etc.)"
+                          required></textarea>
+              </div>
+
+              <div class="d-flex align-items-center gap-3">
+                <button id="contactBtn" class="btn btn-primary btn-lg px-4" type="submit">
+                  Envoyer
+                </button>
+                <small class="text-muted">Réponse rapide par email.</small>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      </div>
+
+      {# Colonne IMAGE #}
+      <div class="col-12 col-lg-5">
+        <div class="card border-0 shadow-sm h-100 overflow-hidden" style="border-radius: 18px;">
+          <div class="position-relative h-100" style="min-height: 360px;">
+            <img
+              src="{{ asset('assets/img/julie.png') }}"
+              alt="Julie - Vite & Gourmand"
+              class="w-100 h-100"
+              style="object-fit: cover;"
+            >
+
+            {# Overlay texte #}
+            <div class="position-absolute top-0 start-0 w-100 h-100"
+                 style="background: linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.10) 55%, rgba(0,0,0,.35));">
+            </div>
+
+            <div class="position-absolute bottom-0 start-0 p-4 text-white">
+              <div class="fw-bold fs-4">Vite & Gourmand</div>
+              <div class="opacity-75">Traiteur à Bordeaux — menus & événements</div>
+              <div class="mt-3 d-flex flex-wrap gap-2">
+                <span class="badge bg-light text-dark">Menus variés</span>
+                <span class="badge bg-light text-dark">Sur-mesure</span>
+                <span class="badge bg-light text-dark">Livraison</span>
+              </div>
+            </div>
+          </div>
+
+          {# Petit bandeau optionnel sous l’image #}
+          <div class="card-body border-top">
+            <div class="small text-muted">
+              Astuce : indique la <strong>date</strong>, le <strong>nombre de personnes</strong> et le <strong>lieu</strong> pour une réponse plus rapide.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{# ✅ AJAX OPTIONNEL (si le JS plante, le POST normal marche quand même) #}
+<script>
+  const form = document.getElementById('contactForm');
+  const alertBox = document.getElementById('contactAlert');
+  const btn = document.getElementById('contactBtn');
+
+  function showAlert(type, msg) {
+    alertBox.className = 'alert alert-' + type;
+    alertBox.textContent = msg;
+    alertBox.classList.remove('d-none');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    // Si tu veux PAS d'AJAX, supprime ce script.
+    e.preventDefault();
+
+    alertBox.classList.add('d-none');
+    btn.disabled = true;
+    const oldText = btn.textContent;
+    btn.textContent = 'Envoi...';
+
+    try {
+      const formData = new FormData(form);
+
+      const res = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        showAlert('danger', data.message || "Erreur lors de l'envoi.");
+      } else {
+        showAlert('success', data.message);
+        form.reset();
+      }
+    } catch (err) {
+      showAlert('danger', "Erreur réseau / serveur.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = oldText;
+    }
+  });
+</script>
+{% endblock %}
