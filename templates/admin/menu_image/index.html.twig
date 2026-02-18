@@ -29,6 +29,23 @@
               {% endif %}
             </div>
             <div class="text-muted small mt-2">{{ img.altText ?? '—' }}</div>
+            <div class="mt-3 d-flex gap-2">
+  <button type="button"
+          class="btn btn-sm btn-outline-success jsSetCover"
+          data-url="{{ path('admin_menu_image_set_cover', {imgId: img.id}) }}">
+    <i class="bi bi-star me-1"></i> Cover
+  </button>
+
+  <form class="d-inline jsDeleteImage"
+        method="post"
+        action="{{ path('admin_menu_image_delete', {imgId: img.id}) }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete_menu_image_' ~ img.id) }}">
+    <button class="btn btn-sm btn-outline-danger" type="submit">
+      <i class="bi bi-trash me-1"></i> Supprimer
+    </button>
+  </form>
+</div>
+
           </div>
         </div>
       </div>
@@ -108,5 +125,46 @@
   document.getElementById('btnAddImage').addEventListener('click', (e) => {
     openModal(e.currentTarget.dataset.url);
   });
+
+
+
+  // ✅ Set cover
+document.querySelectorAll('.jsSetCover').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const res = await fetch(btn.dataset.url, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    });
+
+    const data = await res.json().catch(() => null);
+    if (res.ok && data && data.ok) {
+      location.reload();
+      return;
+    }
+    alert((data && data.message) || 'Erreur lors du changement de cover.');
+  });
+});
+
+// ✅ Delete image
+document.querySelectorAll('.jsDeleteImage').forEach(form => {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!confirm('Supprimer cette image ?')) return;
+
+    const res = await fetch(form.action, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+      body: new FormData(form)
+    });
+
+    const data = await res.json().catch(() => null);
+    if (res.ok && data && data.ok) {
+      location.reload();
+      return;
+    }
+    alert((data && data.message) || 'Erreur lors de la suppression.');
+  });
+});
+
 </script>
 {% endblock %}

@@ -84,4 +84,53 @@ class MenuImageController extends AbstractController
 
         return $this->redirectToRoute('admin_menu_images', ['id' => $menu->getId()]);
     }
+
+    #[Route('/images/{imgId}/delete', name: 'admin_menu_image_delete', methods: ['POST'])]
+public function deleteImage(int $imgId, Request $request, EntityManagerInterface $em): JsonResponse
+{
+    $img = $em->getRepository(MenuImage::class)->find($imgId);
+    if (!$img) {
+        return $this->json(['ok' => false, 'message' => 'Image introuvable'], 404);
+    }
+
+    if (!$this->isCsrfTokenValid('delete_menu_image_'.$imgId, $request->request->get('_token'))) {
+        return $this->json(['ok' => false, 'message' => 'Token CSRF invalide'], 403);
+    }
+
+    // supprimer le fichier physique (si existe)
+    $path = $img->getImagePath(); // ex: uploads/menus/xxx.jpg
+    if ($path) {
+        $fullPath = $this->getParameter('kernel.project_dir').'/public/'.$path;
+        if (is_file($fullPath)) {
+            @unlink($fullPath);
+        }
+    }
+
+    $em->remove($img);
+    $em->flush();
+
+    return $this->json(['ok' => true, 'message' => 'Image supprimée ✅']);
+}
+
+#[Route('/images/{imgId}/cover', name: 'admin_menu_image_set_cover', methods: ['POST'])]
+public function setCover(int $imgId, EntityManagerInterface $em): JsonResponse
+{
+    $img = $em->getRepository(MenuImage::class)->find($imgId);
+    if (!$img) {
+        return $this->json(['ok' => false, 'message' => 'Image introuvable'], 404);
+    }
+
+    $menu = $img->getMenu();
+
+    // enlever cover des autres images
+    foreach ($menu->getImages() as $other) {
+        $other->setIsCover(false);
+    }
+
+    $img->setIsCover(true);
+    $em->flush();
+
+    return $this->json(['ok' => true, 'message' => 'Couverture mise à jour ✅']);
+}
+
 }
