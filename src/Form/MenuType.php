@@ -11,6 +11,10 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use App\Entity\Dish;
+use App\Repository\DishRepository;
+
 
 class MenuType extends AbstractType
 {
@@ -39,9 +43,51 @@ class MenuType extends AbstractType
                 'html5' => true,
                 'attr' => ['step' => 1, 'min' => 0],
             ])
+            ->add('entreeDish', EntityType::class, [
+    'class' => Dish::class,
+    'label' => 'Entrée (optionnel)',
+    'mapped' => false,
+    'required' => false,
+    'placeholder' => 'Aucune',
+    'choice_label' => 'name',
+    'query_builder' => function (DishRepository $r) {
+        return $r->createQueryBuilder('d')
+            ->andWhere('d.type = :t')->setParameter('t', Dish::TYPE_ENTREE)
+            ->orderBy('d.name', 'ASC');
+    },
+])
+->add('platDish', EntityType::class, [
+    'class' => Dish::class,
+    'label' => 'Plat (optionnel)',
+    'mapped' => false,
+    'required' => false,
+    'placeholder' => 'Aucun',
+    'choice_label' => 'name',
+    'query_builder' => function (DishRepository $r) {
+        return $r->createQueryBuilder('d')
+            ->andWhere('d.type = :t')->setParameter('t', Dish::TYPE_PLAT)
+            ->orderBy('d.name', 'ASC');
+    },
+])
+->add('dessertDish', EntityType::class, [
+    'class' => Dish::class,
+    'label' => 'Dessert (optionnel)',
+    'mapped' => false,
+    'required' => false,
+    'placeholder' => 'Aucun',
+    'choice_label' => 'name',
+    'query_builder' => function (DishRepository $r) {
+        return $r->createQueryBuilder('d')
+            ->andWhere('d.type = :t')->setParameter('t', Dish::TYPE_DESSERT)
+            ->orderBy('d.name', 'ASC');
+    },
+])
+
 
             ->add('stock', IntegerType::class, ['label' => 'Stock', 'required' => false])
             ->add('isActive', CheckboxType::class, ['label' => 'Actif', 'required' => false]);
+
+            
     }
 
     public function configureOptions(OptionsResolver $resolver): void

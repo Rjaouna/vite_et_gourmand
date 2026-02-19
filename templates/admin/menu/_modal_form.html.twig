@@ -33,6 +33,24 @@
           </div>
           {{ form_errors(form.isActive) }}
         </div>
+
+        {# ✅ Composition optionnelle #}
+        {% if form.entreeDish is defined or form.platDish is defined or form.dessertDish is defined %}
+          <div class="col-12">
+            <hr class="my-2">
+            <div class="fw-semibold mb-2">Composition (optionnel)</div>
+          </div>
+
+          {% if form.entreeDish is defined %}
+            <div class="col-md-4">{{ form_row(form.entreeDish) }}</div>
+          {% endif %}
+          {% if form.platDish is defined %}
+            <div class="col-md-4">{{ form_row(form.platDish) }}</div>
+          {% endif %}
+          {% if form.dessertDish is defined %}
+            <div class="col-md-4">{{ form_row(form.dessertDish) }}</div>
+          {% endif %}
+        {% endif %}
       </div>
 
       <div class="mt-4 d-flex gap-2">

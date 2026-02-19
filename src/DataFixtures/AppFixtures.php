@@ -29,10 +29,6 @@ class AppFixtures extends Fixture
         return $prefix . '@123';
     }
 
-    /**
-     * Crée un faux fichier image (SVG) dans /public/uploads/menus/
-     * et retourne le chemin relatif utilisable par asset().
-     */
     private function createMenuPlaceholderImage(string $projectDir, string $fileName, string $title): string
     {
         $dir = $projectDir . '/public/uploads/menus';
@@ -66,20 +62,19 @@ SVG;
     public function load(ObjectManager $manager): void
     {
         $faker = Factory::create('fr_FR');
-        $now   = new \DateTimeImmutable();
+        $now = new \DateTimeImmutable();
         $projectDir = dirname(__DIR__, 2);
 
-        // ✅ Cover par défaut (doit exister : public/uploads/menus/menu.png)
+        // cover par défaut : public/uploads/menus/menu.png
         $defaultCoverPath = 'uploads/menus/menu.png';
 
-        // s'assure que le dossier existe
         $menusDir = $projectDir . '/public/uploads/menus';
         if (!is_dir($menusDir)) {
             @mkdir($menusDir, 0775, true);
         }
 
         // =========================
-        // USERS (admin / employé / clients)
+        // USERS
         // =========================
         $admin = (new User())
             ->setEmail('admin@vitegourmand.fr')
@@ -117,13 +112,12 @@ SVG;
         $employee->setPassword($this->hasher->hashPassword($employee, $this->passwordFromEmail($employee->getEmail())));
         $manager->persist($employee);
 
-        $clients = [];
         for ($i = 0; $i < 20; $i++) {
             $email = $faker->unique()->safeEmail();
 
             $u = (new User())
                 ->setEmail($email)
-                ->setRoles([]) // ROLE_USER auto dans getRoles()
+                ->setRoles([])
                 ->setFirstName($faker->firstName())
                 ->setLastName($faker->lastName())
                 ->setPhone('06' . $faker->numerify('########'))
@@ -138,11 +132,10 @@ SVG;
 
             $u->setPassword($this->hasher->hashPassword($u, $this->passwordFromEmail($email)));
             $manager->persist($u);
-            $clients[] = $u;
         }
 
         // =========================
-        // OPENING HOURS (7 jours)
+        // OPENING HOURS
         // =========================
         $hours = [
             1 => ['closed' => false, 'open' => '09:00', 'close' => '18:00'],
@@ -191,18 +184,13 @@ SVG;
         }
 
         // =========================
-        // DISHES (entrées/plats/desserts)
+        // DISHES
         // =========================
         $entrees = [];
         $plats = [];
         $desserts = [];
 
-        // ajuste les quantités comme tu veux
-        $countEntrees = 25;
-        $countPlats   = 35;
-        $countDesserts= 25;
-
-        for ($i = 0; $i < $countEntrees; $i++) {
+        for ($i = 0; $i < 25; $i++) {
             $dish = (new Dish())
                 ->setName('Entrée ' . ucfirst($faker->words(2, true)))
                 ->setType(Dish::TYPE_ENTREE)
@@ -214,7 +202,7 @@ SVG;
             $entrees[] = $dish;
         }
 
-        for ($i = 0; $i < $countPlats; $i++) {
+        for ($i = 0; $i < 35; $i++) {
             $dish = (new Dish())
                 ->setName('Plat ' . ucfirst($faker->words(2, true)))
                 ->setType(Dish::TYPE_PLAT)
@@ -226,7 +214,7 @@ SVG;
             $plats[] = $dish;
         }
 
-        for ($i = 0; $i < $countDesserts; $i++) {
+        for ($i = 0; $i < 25; $i++) {
             $dish = (new Dish())
                 ->setName('Dessert ' . ucfirst($faker->words(2, true)))
                 ->setType(Dish::TYPE_DESSERT)
@@ -239,50 +227,48 @@ SVG;
         }
 
         // =========================
-        // MENUS + IMAGES
+        // MENUS + IMAGES + COMPOSITION OPTIONNELLE
         // =========================
         $themes = ['Classique', 'Noël', 'Pâques', 'Évènement', 'Anniversaire', 'Buffet', 'Cocktail'];
         $menuCount = 18;
 
         for ($i = 1; $i <= $menuCount; $i++) {
-            $theme = $faker->randomElement($themes);
-            $minPeople = $faker->numberBetween(2, 12);
-            $minPrice = $faker->numberBetween(10, 28); // €/personne (maquette)
-
             $menu = (new Menu())
                 ->setTitle('Menu ' . ucfirst($faker->words(2, true)))
-                ->setThemeLabel($theme)
+                ->setThemeLabel($faker->randomElement($themes))
                 ->setDescription($faker->sentence(18))
                 ->setConditions('Commande minimum ' . $faker->numberBetween(24, 168) . 'h à l’avance.')
-                ->setMinPeople($minPeople)
-                ->setMinPrice((string) $minPrice)
+                ->setMinPeople($faker->numberBetween(2, 12))
+                ->setMinPrice((string) $faker->numberBetween(10, 28))
                 ->setStock($faker->numberBetween(0, 15))
                 ->setIsActive(true)
                 ->setCreatedAt($now)
                 ->setUpdatedAt($now);
 
-            // ✅ Si tu as ajouté la relation Menu<->Dish (ManyToMany),
-            // tu peux associer des plats à chaque menu :
-            // (si pas encore en place, commente ces 3 lignes)
+            // ✅ Composition (optionnelle)
             if (method_exists($menu, 'addDish')) {
-                $menu->addDish($faker->randomElement($entrees));
-                $menu->addDish($faker->randomElement($plats));
-                $menu->addDish($faker->randomElement($desserts));
+                // entrée 90% du temps
+                if ($faker->boolean(90) && !empty($entrees)) {
+                    $menu->addDish($faker->randomElement($entrees));
+                }
+                // plat 95% du temps
+                if ($faker->boolean(95) && !empty($plats)) {
+                    $menu->addDish($faker->randomElement($plats));
+                }
+                // dessert 70% du temps
+                if ($faker->boolean(70) && !empty($desserts)) {
+                    $menu->addDish($faker->randomElement($desserts));
+                }
             }
 
-            // 1 à 4 images par menu
+            // Images
             $imgCount = $faker->numberBetween(1, 4);
             for ($j = 1; $j <= $imgCount; $j++) {
                 $isCover = ($j === 1);
 
-                if ($isCover) {
-                    // ✅ cover par défaut
-                    $imgPath = $defaultCoverPath;
-                } else {
-                    // placeholders
-                    $fileName = 'menu_' . $i . '_' . $j . '.svg';
-                    $imgPath = $this->createMenuPlaceholderImage($projectDir, $fileName, $menu->getTitle());
-                }
+                $imgPath = $isCover
+                    ? $defaultCoverPath
+                    : $this->createMenuPlaceholderImage($projectDir, 'menu_'.$i.'_'.$j.'.svg', $menu->getTitle());
 
                 $img = (new MenuImage())
                     ->setMenu($menu)
