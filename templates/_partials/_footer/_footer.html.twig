@@ -51,16 +51,23 @@
         </ul>
       </div>
 
-      {# Newsletter / Social #}
+      {# Horaires (AJAX) #}
       <div class="col-12 col-lg-3">
-        <div class="fw-semibold mb-3">Rester informé</div>
+        <div class="fw-semibold mb-3">Horaires</div>
 
-        <form class="d-flex gap-2 mb-3" action="#" method="post">
-          <input type="email" class="form-control" placeholder="Votre email" aria-label="Votre email">
-          <button class="btn btn-primary" type="submit">OK</button>
-        </form>
+        <div id="openingHoursLoading" class="text-secondary small">
+          <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          Chargement...
+        </div>
 
-        <div class="d-flex gap-2">
+        <ul id="openingHoursList" class="list-unstyled mb-0 d-none"></ul>
+
+        <div id="openingHoursError" class="alert alert-dark border-secondary small py-2 d-none mb-0">
+          Impossible de charger les horaires.
+        </div>
+
+        {# Social (on garde ton bloc social ici sous les horaires) #}
+        <div class="d-flex gap-2 mt-3">
           <a href="#" class="btn btn-outline-light btn-sm">Facebook</a>
           <a href="#" class="btn btn-outline-light btn-sm">Instagram</a>
           <a href="#" class="btn btn-outline-light btn-sm">LinkedIn</a>
@@ -83,4 +90,49 @@
       </div>
     </div>
   </div>
+
+  {# ✅ AJAX horaires #}
+  <script>
+    (async function loadOpeningHours() {
+      const url = "{{ path('app_opening_hours_json') }}";
+
+      const loading = document.getElementById('openingHoursLoading');
+      const list = document.getElementById('openingHoursList');
+      const error = document.getElementById('openingHoursError');
+
+      function show(el, yes) {
+        el.classList.toggle('d-none', !yes);
+      }
+
+      try {
+        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const data = await res.json();
+
+        if (!res.ok || !data || !data.ok) throw new Error('Bad response');
+
+        list.innerHTML = data.items.map(item => {
+          const right = item.closed
+            ? '<span class="text-secondary">Fermé</span>'
+            : `<span class="text-light">${item.open} - ${item.close}</span>`;
+
+          return `
+            <li class="d-flex justify-content-between gap-3 mb-2 small">
+              <span class="text-secondary">${item.label}</span>
+              ${right}
+            </li>
+          `;
+        }).join('');
+
+        show(loading, false);
+        show(error, false);
+        show(list, true);
+
+      } catch (e) {
+        console.error('Opening hours load error:', e);
+        show(loading, false);
+        show(list, false);
+        show(error, true);
+      }
+    })();
+  </script>
 </footer>
