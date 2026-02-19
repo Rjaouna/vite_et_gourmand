@@ -1,0 +1,165 @@
+{% extends 'base.html.twig' %}
+{% block title %}Gestion des plats{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="fw-bold mb-0">Plats</h1>
+
+    <button class="btn btn-primary" id="btnAddDish"
+            data-url="{{ path('admin_dish_new') }}">
+      <i class="bi bi-plus-circle me-1"></i> Ajouter
+    </button>
+  </div>
+
+  {% for type, messages in app.flashes %}
+    {% for m in messages %}
+      <div class="alert alert-{{ type }}">{{ m }}</div>
+    {% endfor %}
+  {% endfor %}
+
+  <div class="card shadow-sm border-0">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Nom</th>
+            <th>Type</th>
+            <th>Statut</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in dishes %}
+            <tr>
+              <td class="fw-semibold">{{ d.name }}</td>
+              <td>
+                {% if d.type == 'entree' %}
+                  <span class="badge bg-info text-dark">Entrée</span>
+                {% elseif d.type == 'plat' %}
+                  <span class="badge bg-primary">Plat</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">Dessert</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if d.isActive %}
+                  <span class="badge bg-success">Actif</span>
+                {% else %}
+                  <span class="badge bg-secondary">Inactif</span>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary btnEditDish"
+                        data-url="{{ path('admin_dish_edit', {id: d.id}) }}">
+                  <i class="bi bi-pencil-square me-1"></i> Modifier
+                </button>
+
+                <form method="post"
+                      action="{{ path('admin_dish_delete', {id: d.id}) }}"
+                      class="d-inline"
+                      onsubmit="return confirm('Supprimer ce plat ?');">
+                  <input type="hidden" name="_token" value="{{ csrf_token('delete_dish_' ~ d.id) }}">
+                  <button class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash me-1"></i> Supprimer
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="4" class="text-center text-muted py-4">Aucun plat.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{# ✅ MODAL #}
+<div class="modal fade" id="dishModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="dishModalTitle">Plat</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="dishModalBody">Chargement...</div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import * as bootstrap from 'bootstrap';
+
+  const modalEl = document.getElementById('dishModal');
+  const modalTitle = document.getElementById('dishModalTitle');
+  const modalBody = document.getElementById('dishModalBody');
+  const modal = new bootstrap.Modal(modalEl);
+
+  function bindFormAjax() {
+    const form = modalBody.querySelector('#dishAjaxForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const res = await fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+        },
+        body: new FormData(form)
+      });
+
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const text = await res.text();
+        modalBody.innerHTML = '<div class="alert alert-danger">Erreur serveur. Regarde la console.</div>';
+        console.error('Réponse non JSON:', text);
+        return;
+      }
+
+      const data = await res.json();
+
+      if (res.ok && data.ok) {
+        modal.hide();
+        location.reload();
+        return;
+      }
+
+      if (data.html) {
+        modalBody.innerHTML = data.html;
+        bindFormAjax();
+        return;
+      }
+
+      modalBody.innerHTML = '<div class="alert alert-danger">Erreur serveur.</div>';
+    });
+  }
+
+  async function openModal(url, title) {
+    modalTitle.textContent = title;
+    modalBody.innerHTML = 'Chargement...';
+    modal.show();
+
+    const res = await fetch(url, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+
+    modalBody.innerHTML = await res.text();
+    bindFormAjax();
+  }
+
+  document.getElementById('btnAddDish')?.addEventListener('click', (e) => {
+    openModal(e.currentTarget.dataset.url, 'Ajouter un plat');
+  });
+
+  document.querySelectorAll('.btnEditDish').forEach(btn => {
+    btn.addEventListener('click', () => openModal(btn.dataset.url, 'Modifier le plat'));
+  });
+</script>
+{% endblock %}

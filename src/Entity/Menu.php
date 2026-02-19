@@ -6,6 +6,7 @@ use App\Repository\MenuRepository;
 use App\Entity\MenuImage;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use App\Entity\Dish;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -50,6 +51,32 @@ class Menu
 private Collection $images;
 
 
+#[ORM\ManyToMany(targetEntity: Dish::class, inversedBy: 'menus')]
+#[ORM\JoinTable(name: 'menu_dish')]
+private Collection $dishes;
+
+/** @return Collection<int, Dish> */
+public function getDishes(): Collection
+{
+    return $this->dishes;
+}
+
+public function addDish(Dish $dish): static
+{
+    if (!$this->dishes->contains($dish)) {
+        $this->dishes->add($dish);
+    }
+    return $this;
+}
+
+public function removeDish(Dish $dish): static
+{
+    $this->dishes->removeElement($dish);
+    return $this;
+}
+
+
+
 /** @return Collection<int, MenuImage> */
 public function getImages(): Collection
 {
@@ -85,6 +112,8 @@ public function removeImage(MenuImage $image): static
     {
       $this->orders = new ArrayCollection();
     $this->images = new ArrayCollection();
+    $this->dishes = new ArrayCollection();
+
     }
 
     public function getId(): ?int

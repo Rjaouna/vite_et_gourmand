@@ -88,4 +88,52 @@ class MenuPublicController extends AbstractController
             'html' => $html,
         ]);
     }
+
+    #[Route('/menu/{id}', name: 'menu_show', requirements: ['id' => '\d+'])]
+    public function show(Menu $menu): Response
+    {
+        // ✅ Image cover par défaut
+        $defaultCover = 'uploads/menus/menu.png';
+
+        $coverPath = $defaultCover;
+        $sideImagePath = $defaultCover;
+
+        // Cover = image marquée isCover
+        foreach ($menu->getImages() as $img) {
+            if (method_exists($img, 'isCover') && $img->isCover()) {
+                $coverPath = $img->getImagePath() ?: $defaultCover;
+                break;
+            }
+        }
+
+        // Petite image à droite = première image non cover (sinon cover)
+        foreach ($menu->getImages() as $img) {
+            if (method_exists($img, 'isCover') && !$img->isCover()) {
+                $sideImagePath = $img->getImagePath() ?: $coverPath;
+                break;
+            }
+        }
+        if (!$sideImagePath) {
+            $sideImagePath = $coverPath;
+        }
+
+        /**
+         * ⚠️ Entrée/Plat/Dessert :
+         * Ton entity Menu ne montre pas de relation vers des plats.
+         * Donc je mets une structure "courses" prête à brancher plus tard.
+         * Pour l’instant : vide => le template affiche un contenu fallback.
+         */
+        $courses = [
+            'entree' => [],
+            'plat' => [],
+            'dessert' => [],
+        ];
+
+        return $this->render('menu/show.html.twig', [
+            'menu' => $menu,
+            'coverPath' => $coverPath,
+            'sideImagePath' => $sideImagePath,
+            'courses' => $courses,
+        ]);
+    }
 }

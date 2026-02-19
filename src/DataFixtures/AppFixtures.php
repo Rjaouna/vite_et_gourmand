@@ -42,7 +42,6 @@ class AppFixtures extends Fixture
 
         $path = $dir . '/' . $fileName;
 
-        // petit SVG simple (pas besoin de lib)
         $safeTitle = htmlspecialchars($title, ENT_QUOTES);
         $svg = <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
@@ -61,7 +60,6 @@ SVG;
 
         file_put_contents($path, $svg);
 
-        // chemin relatif (public/..)
         return 'uploads/menus/' . $fileName;
     }
 
@@ -71,11 +69,10 @@ SVG;
         $now   = new \DateTimeImmutable();
         $projectDir = dirname(__DIR__, 2);
 
-        // ✅ Image principale par défaut pour chaque menu
-        // correspond à : public/uploads/menus/menu.png
+        // ✅ Cover par défaut (doit exister : public/uploads/menus/menu.png)
         $defaultCoverPath = 'uploads/menus/menu.png';
 
-        // s'assure que le dossier existe (le fichier menu.png doit exister côté projet)
+        // s'assure que le dossier existe
         $menusDir = $projectDir . '/public/uploads/menus';
         if (!is_dir($menusDir)) {
             @mkdir($menusDir, 0775, true);
@@ -174,46 +171,71 @@ SVG;
         // ALLERGENS
         // =========================
         $allergenNames = ['Gluten', 'Lactose', 'Arachides', 'Fruits à coque', 'Oeufs', 'Poisson', 'Soja', 'Sésame', 'Moutarde'];
-        $allergens = [];
         foreach ($allergenNames as $name) {
             $a = (new Allergen())
                 ->setName($name)
                 ->setCreatedAt($now);
             $manager->persist($a);
-            $allergens[] = $a;
         }
 
         // =========================
         // DIETS
         // =========================
         $dietNames = ['Végétarien', 'Vegan', 'Classique', 'Sans gluten', 'Halal'];
-        $diets = [];
         foreach ($dietNames as $name) {
             $d = (new Diet())
                 ->setName($name)
                 ->setIsActive(true)
                 ->setCreatedAt($now);
             $manager->persist($d);
-            $diets[] = $d;
         }
 
         // =========================
-        // DISHES (beaucoup)
+        // DISHES (entrées/plats/desserts)
         // =========================
-        $dishTypes = ['entree', 'plat', 'dessert'];
-        $dishes = [];
-        for ($i = 0; $i < 40; $i++) {
-            $type = $faker->randomElement($dishTypes);
+        $entrees = [];
+        $plats = [];
+        $desserts = [];
 
+        // ajuste les quantités comme tu veux
+        $countEntrees = 25;
+        $countPlats   = 35;
+        $countDesserts= 25;
+
+        for ($i = 0; $i < $countEntrees; $i++) {
             $dish = (new Dish())
-                ->setName(ucfirst($faker->words(3, true)))
-                ->setType($type)
+                ->setName('Entrée ' . ucfirst($faker->words(2, true)))
+                ->setType(Dish::TYPE_ENTREE)
+                ->setDescription($faker->sentence(14))
+                ->setIsActive(true)
+                ->setCreatedAt($now);
+
+            $manager->persist($dish);
+            $entrees[] = $dish;
+        }
+
+        for ($i = 0; $i < $countPlats; $i++) {
+            $dish = (new Dish())
+                ->setName('Plat ' . ucfirst($faker->words(2, true)))
+                ->setType(Dish::TYPE_PLAT)
+                ->setDescription($faker->sentence(16))
+                ->setIsActive(true)
+                ->setCreatedAt($now);
+
+            $manager->persist($dish);
+            $plats[] = $dish;
+        }
+
+        for ($i = 0; $i < $countDesserts; $i++) {
+            $dish = (new Dish())
+                ->setName('Dessert ' . ucfirst($faker->words(2, true)))
+                ->setType(Dish::TYPE_DESSERT)
                 ->setDescription($faker->sentence(12))
                 ->setIsActive(true)
                 ->setCreatedAt($now);
 
             $manager->persist($dish);
-            $dishes[] = $dish;
+            $desserts[] = $dish;
         }
 
         // =========================
@@ -225,7 +247,7 @@ SVG;
         for ($i = 1; $i <= $menuCount; $i++) {
             $theme = $faker->randomElement($themes);
             $minPeople = $faker->numberBetween(2, 12);
-            $minPrice = $faker->numberBetween(35, 160); // on stocke en string
+            $minPrice = $faker->numberBetween(10, 28); // €/personne (maquette)
 
             $menu = (new Menu())
                 ->setTitle('Menu ' . ucfirst($faker->words(2, true)))
@@ -239,16 +261,25 @@ SVG;
                 ->setCreatedAt($now)
                 ->setUpdatedAt($now);
 
+            // ✅ Si tu as ajouté la relation Menu<->Dish (ManyToMany),
+            // tu peux associer des plats à chaque menu :
+            // (si pas encore en place, commente ces 3 lignes)
+            if (method_exists($menu, 'addDish')) {
+                $menu->addDish($faker->randomElement($entrees));
+                $menu->addDish($faker->randomElement($plats));
+                $menu->addDish($faker->randomElement($desserts));
+            }
+
             // 1 à 4 images par menu
             $imgCount = $faker->numberBetween(1, 4);
             for ($j = 1; $j <= $imgCount; $j++) {
-                $isCover = ($j === 1); // la première cover
+                $isCover = ($j === 1);
 
                 if ($isCover) {
-                    // ✅ Photo principale par défaut (la même pour tous les menus)
+                    // ✅ cover par défaut
                     $imgPath = $defaultCoverPath;
                 } else {
-                    // Images secondaires : placeholders SVG générés
+                    // placeholders
                     $fileName = 'menu_' . $i . '_' . $j . '.svg';
                     $imgPath = $this->createMenuPlaceholderImage($projectDir, $fileName, $menu->getTitle());
                 }
@@ -269,7 +300,7 @@ SVG;
         }
 
         // =========================
-        // CONTACT MESSAGES (beaucoup)
+        // CONTACT MESSAGES
         // =========================
         for ($i = 0; $i < 30; $i++) {
             $cm = (new ContactMessage())
